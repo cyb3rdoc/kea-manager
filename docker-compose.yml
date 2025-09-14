@@ -1,0 +1,11 @@
+services:
+  kea-manager:
+    image: cyb3rdoc/kea-manager:latest
+    container_name: kea-manager
+    hostname: kea-manager
+    network_mode: host
+    environment:
+      - TZ=UTC
+    volumes:
+      - $(pwd)/volumes/kea-manager/config:/etc/kea
+    restart: always

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Request Password Reset - KEA DHCP Manager{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 2rem auto;">
+    <h2 style="text-align: center; margin-bottom: 2rem; color: #333;">Request Password Reset</h2>
+    <p style="text-align: center; margin-bottom: 2rem; color: #666;">
+        Generate a reset key to reset your username and password.
+    </p>
+
+    <form method="POST">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <button type="submit" class="btn">Generate Reset Key</button>
+        </div>
+    </form>
+
+    <div style="text-align: center; color: #666; font-size: 0.9rem;">
+        <p>After generating the reset key, access the server and check:</p>
+        <code>/etc/kea/password_reset.key</code>
+        <p style="margin-top: 1rem;">Then use the key to reset your credentials.</p>
+    </div>
+
+    <div style="text-align: center; margin-top: 2rem;">
+        <a href="{{ url_for('reset_password') }}" style="color: #667eea; text-decoration: none; margin-right: 1rem;">
+            Reset Password
+        </a>
+        <a href="{{ url_for('login') }}" style="color: #667eea; text-decoration: none;">
+            Back to Login
+        </a>
+    </div>
+</div>
+{% endblock %}

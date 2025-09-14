@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - KEA DHCP Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2 style="color: #333; margin-bottom: 2rem;">
+        <span class="status-indicator status-online"></span>
+        KEA DHCP Server Dashboard
+    </h2>
+
+    <div class="grid" style="gap: 1.5rem;">
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="color: #333; margin-bottom: 1rem;">Quick Actions</h3>
+            <button class="btn" onclick="restartService()">Restart DHCP Service</button>
+            <button class="btn" onclick="location.href='{{ url_for('settings') }}'">Edit Configuration</button>
+            <button class="btn" onclick="location.href='{{ url_for('leases') }}'">View Leases</button>
+        </div>
+
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="color: #333; margin-bottom: 1rem;">Server Information</h3>
+            <p><strong>Config File:</strong> /etc/kea/kea-dhcp4.conf</p>
+            <p><strong>Status:</strong> <span class="status-indicator status-online"></span>Running</p>
+            <p><strong>User:</strong> {{ session.user }}</p>
+        </div>
+
+        {% if config.Dhcp4 and config.Dhcp4.subnet4 %}
+        <div class="card" style="padding: 1.5rem;">
+            <h3 style="color: #333; margin-bottom: 1rem;">Network Summary</h3>
+            {% for subnet in config.Dhcp4.subnet4 %}
+            <div style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #667eea;">
+                <p><strong>Subnet:</strong> {{ subnet.subnet }}</p>
+                {% if subnet.pools %}
+                    {% set pool_range = subnet.pools[0].pool.split('-') %}
+                    <p><strong>Pool:</strong> {{ pool_range[0].strip() }} to {{ pool_range[1].strip() }}</p>
+                {% endif %}
+                {% for option in subnet.get('option-data', []) %}
+                    {% if option.name == 'routers' %}
+                        <p><strong>Gateway:</strong> {{ option.data }}</p>
+                    {% elif option.name == 'domain-name-servers' %}
+                        <p><strong>DNS:</strong> {{ option.data }}</p>
+                    {% endif %}
+                {% endfor %}
+                <p><strong>Reserved:</strong> {{ subnet.reservations|length if subnet.reservations else 0 }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <div id="message" style="margin-top: 2rem;"></div>
+</div>
+
+<script>
+function restartService() {
+    if (confirm('Are you sure you want to restart the DHCP service?')) {
+        fetch('/restart-service', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const messageDiv = document.getElementById('message');
+            if (data.success) {
+                messageDiv.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+            } else {
+                messageDiv.innerHTML = '<div class="alert alert-error">Error: ' + data.error + '</div>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('message').innerHTML = '<div class="alert alert-error">Network error: ' + error + '</div>';
+        });
+    }
+}
+</script>
+{% endblock %}

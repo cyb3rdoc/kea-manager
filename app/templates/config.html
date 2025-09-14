@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration - KEA DHCP Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="color: #333;">Raw KEA Configuration</h2>
+        <div>
+            <button class="btn" onclick="validateConfig()">Validate</button>
+            <button class="btn btn-success" onclick="saveConfig()">Save Configuration</button>
+            <button class="btn btn-danger" onclick="restartService()">Restart Service</button>
+        </div>
+    </div>
+
+    <div class="alert alert-info" style="margin-bottom: 2rem;">
+        <strong>Advanced Users:</strong> Edit the raw JSON configuration directly.
+        For easier management, use the <a href="{{ url_for('settings') }}" style="color: #667eea;">Settings</a> page instead.
+    </div>
+
+    <div class="form-group">
+        <label for="config-editor">Configuration JSON:</label>
+        <textarea id="config-editor" class="config-editor" placeholder="Loading configuration...">{{ config | tojson(indent=2) if config else '{}' }}</textarea>
+    </div>
+
+    <div id="message" style="margin-top: 1rem;"></div>
+
+    <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+        <h4 style="margin-bottom: 1rem; color: #333;">Configuration Help</h4>
+        <p><strong>Key Settings:</strong></p>
+        <ul style="margin-left: 2rem; color: #666;">
+            <li><strong>interfaces:</strong> Network interfaces to listen on</li>
+            <li><strong>subnet4:</strong> DHCP subnets and pools</li>
+            <li><strong>reservations:</strong> Static IP assignments</li>
+            <li><strong>option-data:</strong> DHCP options (gateway, DNS, etc.)</li>
+            <li><strong>valid-lifetime:</strong> Lease duration in seconds</li>
+        </ul>
+    </div>
+</div>
+
+<script>
+function validateConfig() {
+    try {
+        const config = JSON.parse(document.getElementById('config-editor').value);
+        document.getElementById('message').innerHTML = '<div class="alert alert-success">Configuration JSON is valid</div>';
+    } catch (error) {
+        document.getElementById('message').innerHTML = '<div class="alert alert-error">Invalid JSON: ' + error.message + '</div>';
+    }
+}
+
+function saveConfig() {
+    try {
+        const configText = document.getElementById('config-editor').value;
+        const config = JSON.parse(configText);
+
+        fetch('/update-config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(config)
+        })
+        .then(response => response.json())
+        .then(data => {
+            const messageDiv = document.getElementById('message');
+            if (data.success) {
+                messageDiv.innerHTML = '<div class="alert alert-success">Configuration saved successfully!</div>';
+            } else {
+                messageDiv.innerHTML = '<div class="alert alert-error">Error: ' + data.error + '</div>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('message').innerHTML = '<div class="alert alert-error">Network error: ' + error + '</div>';
+        });
+    } catch (error) {
+        document.getElementById('message').innerHTML = '<div class="alert alert-error">Invalid JSON: ' + error.message + '</div>';
+    }
+}
+
+function restartService() {
+    if (confirm('Are you sure you want to restart the DHCP service?')) {
+        fetch('/restart-service', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const messageDiv = document.getElementById('message');
+            if (data.success) {
+                messageDiv.innerHTML = '<div class="alert alert-success">' + data.message + '</div>';
+            } else {
+                messageDiv.innerHTML = '<div class="alert alert-error">Error: ' + data.error + '</div>';
+            }
+        })
+        .catch(error => {
+            document.getElementById('message').innerHTML = '<div class="alert alert-error">Network error: ' + error + '</div>';
+        });
+    }
+}
+
+// Auto-resize textarea
+document.getElementById('config-editor').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = this.scrollHeight + 'px';
+});
+</script>
+{% endblock %}

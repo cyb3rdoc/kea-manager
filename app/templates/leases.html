@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Leases - KEA DHCP Manager{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h2 style="color: #333;">Active DHCP Leases</h2>
+        <button class="btn" onclick="location.reload()">Refresh</button>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-error">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% endif %}
+
+    <div id="leases-container">
+        {% if leases %}
+            <div style="margin-bottom: 1rem;">
+                <strong>Total Active Leases:</strong> {{ leases|length }}
+            </div>
+
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>MAC Address</th>
+                            <th>Hostname</th>
+                            <th>Client ID</th>
+                            <th>Subnet ID</th>
+                            <th>Lifetime (sec)</th>
+                            <th>Expires</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lease in leases %}
+                        <tr>
+                            <td><strong>{{ lease.ip }}</strong></td>
+                            <td>{{ lease.mac }}</td>
+                            <td>{{ lease.hostname }}</td>
+                            <td>{{ lease.client_id if lease.client_id else '-' }}</td>
+                            <td>{{ lease.subnet_id }}</td>
+                            <td>{{ lease.lifetime }}</td>
+                            <td>{{ lease.expire }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 2rem; color: #666;">
+                <h4>No Active Leases Found</h4>
+                <p>This could mean:</p>
+                <ul style="text-align: left; display: inline-block; margin-top: 1rem;">
+                    <li>No devices have requested DHCP leases yet</li>
+                    <li>Lease file is not accessible or empty</li>
+                    <li>DHCP server is not running or configured</li>
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 2rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+        <h4 style="margin-bottom: 1rem; color: #333;">Lease File Locations</h4>
+        <p style="color: #666;">KEA DHCP stores lease information in CSV format at:</p>
+        <ul style="margin-left: 2rem; color: #666; margin-top: 0.5rem;">
+            <li><code>/var/lib/kea/kea-leases4.csv</code> (default location)</li>
+            <li><code>/var/lib/kea/dhcp4.leases</code> (alternative location)</li>
+            <li><code>/tmp/kea-leases4.csv</code> (temporary location)</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
